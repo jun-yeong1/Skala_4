@@ -66,13 +66,16 @@ errors = []
 
 # 서울 3일 시간대별 기온, 강수확률 검증
 try:
-    weather = Weather.model_validate(results[0])
-    valid.append(weather.model_dump())
+    weather = Weather.model_validate(results[0]).model_dump()
+    weather.update(weather.pop("hourly"))
+    valid.append(weather)
 except ValidationError as e:
     errors.append(e.errors())
 
 try:
-    country = Country.model_validate(results[1])
+    country = Country.model_validate(results[1]).model_dump()
+    country["common"] = country.pop("name")["common"]
+
     valid.append(country.model_dump())
 except ValidationError as e:
     errors.append(e.errors())
@@ -84,27 +87,8 @@ except ValidationError as e:
     errors.append(e.errors())
 
 
-# 이중 dict 풀어주기 (csv 저장 시, dict 안에 dict가 있으면 오류 발생)
-records = []
-
-for item in valid:
-    record = {}
-    # 서울 3일 시간대별 기온, 강수확률 api 에서 hourly dict 풀기
-    if "hourly" in item:
-        record["latitude"] = item["latitude"]
-        record["longitude"] = item["longitude"]
-        record["temperature_count"] = len(item["hourly"]["temperature_2m"])
-        record["precipitation_count"] = len(item["hourly"]["precipitation_probability"])
-    # 한국 국가 정보 api 에서 name dict 풀기
-    elif "name" in item:
-        record["country"] = item["name"]["common"]
-        record["population"] = item["population"]
-    else:
-        record = item
-
-    records.append(record)
-
-df = pd.DataFrame(records)
+# 데이터 형식 통일
+df = pd.DataFrame(valid)
 
 # CSV 저장 시간
 
