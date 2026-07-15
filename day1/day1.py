@@ -12,7 +12,7 @@
 import asyncio, httpx
 import pandas as pd
 import time
-from pydantic import BaseModel, ValidationError, Field
+from pydantic import BaseModel, ValidationError
 
 ### 2. 비동기로 api 호출 및 데이터 수집
 # api 호출 함수 정의
@@ -33,9 +33,9 @@ urls = ['https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9
         'https://restcountries.com/v3.1/alpha/KR',
         'http://ip-api.com/json/8.8.8.8']
 
-results = asyncio.run(fetch_all(urls))
 
 ### 3. Pydantic v2로 스키마 검증
+
 # 서울 3일 시간대별 기온, 강수확률
 class Hourly(BaseModel):
     temperature_2m: list[float]
@@ -58,81 +58,85 @@ class IPInfo(BaseModel):
     city: str
     query: str
 
-# valid, errors 리스트 선언
-valid = []
-errors = []
+### 5) 테스트 코드
 
-# 검증
-
-# 서울 3일 시간대별 기온, 강수확률 검증
-try:
-    weather = Weather.model_validate(results[0]).model_dump()
+# 스키마 함수로 변경함 -> 테스트로 이용
+def validate_weather(data):
+    weather = Weather.model_validate(data).model_dump()
     weather.update(weather.pop("hourly"))
-    valid.append(weather)
-except ValidationError as e:
-    errors.append(e.errors())
+    return weather
 
-try:
-    country = Country.model_validate(results[1]).model_dump()
+def validate_country(data):
+    country = Country.model_validate(data).model_dump()
     country["common"] = country.pop("name")["common"]
+    return country
 
-    valid.append(country.model_dump())
-except ValidationError as e:
-    errors.append(e.errors())
+def validate_ip(data):
+    return IPInfo.model_validate(data).model_dump()
 
-try:
-    ip = IPInfo.model_validate(results[2])
-    valid.append(ip.model_dump())
-except ValidationError as e:
-    errors.append(e.errors())
+def main():
+    results = asyncio.run(fetch_all(urls))
+
+    valid = []
+    errors = []
+
+    try:
+        valid.append(validate_weather(results[0]))
+    except ValidationError as e:
+        errors.append(e.errors())
+
+    try:
+        # countries API가 리스트를 반환하는 경우
+        data = results[1][0] if isinstance(results[1], list) else results[1]
+        valid.append(validate_country(data))
+    except ValidationError as e:
+        errors.append(e.errors())
+
+    try:
+        valid.append(validate_ip(results[2]))
+    except ValidationError as e:
+        errors.append(e.errors())
+
+    df = pd.DataFrame(valid)
+
+    # ---------------- CSV 저장 ----------------
+    start = time.perf_counter()
+    df.to_csv("valid.csv", index=False, encoding="utf-8-sig")
+    csv_write = time.perf_counter() - start
+
+    # ---------------- Parquet 저장 ----------------
+    start = time.perf_counter()
+    df.to_parquet("valid.parquet", index=False)
+    parquet_write = time.perf_counter() - start
+
+    # ---------------- CSV 읽기 ----------------
+    start = time.perf_counter()
+    csv_df = pd.read_csv("valid.csv")
+    csv_read = time.perf_counter() - start
+
+    # ---------------- Parquet 읽기 ----------------
+    start = time.perf_counter()
+    parquet_df = pd.read_parquet("valid.parquet")
+    parquet_read = time.perf_counter() - start
+
+    assert len(csv_df) == len(valid), "CSV 건수 불일치"
+    assert len(parquet_df) == len(valid), "Parquet 건수 불일치"
+
+    print(f"Valid : {len(valid)}")
+    print(f"Errors : {len(errors)}")
+
+    print("\n===== 결과 =====")
+    print("CSV 건수 :", len(csv_df))
+    print("Parquet 건수 :", len(parquet_df))
+
+    print("\n===== 쓰기 시간 =====")
+    print(f"CSV : {csv_write:.6f} sec")
+    print(f"Parquet : {parquet_write:.6f} sec")
+
+    print("\n===== 읽기 시간 =====")
+    print(f"CSV : {csv_read:.6f} sec")
+    print(f"Parquet : {parquet_read:.6f} sec")
 
 
-# 데이터 형식 통일
-df = pd.DataFrame(valid)
-
-# CSV 저장 시간
-
-start = time.perf_counter()
-
-df.to_csv("valid.csv", index=False, encoding="utf-8-sig")
-
-csv_write = time.perf_counter() - start
-
-# Parquet 저장 시간
-start = time.perf_counter()
-
-df.to_parquet("valid.parquet", index=False)
-
-parquet_write = time.perf_counter() - start
-
-
-# CSV 읽기 시간
-start = time.perf_counter()
-
-csv_df = pd.read_csv("valid.csv")
-
-csv_read = time.perf_counter() - start
-
-
-# Parquet 읽기 시간
-start = time.perf_counter()
-
-parquet_df = pd.read_parquet("valid.parquet")
-
-parquet_read = time.perf_counter() - start
-
-# 건수 검증
-assert len(csv_df) == len(valid)
-assert len(parquet_df) == len(valid)
-
-print("\n===== 결과 =====")
-print("CSV 건수      :", len(csv_df))
-print("Parquet 건수  :", len(parquet_df))
-
-print("\n===== 쓰기 시간 =====")
-print(f"CSV      : {csv_write:.6f} sec")
-print(f"Parquet  : {parquet_write:.6f} sec")
-
-print("\n===== 읽기 시간 =====")
-print(f"CSV      : {csv_read:.6f} sec")
-print(f"Parquet  : {parquet_read:.6f} sec")
+if __name__ == "__main__":
+    main()
