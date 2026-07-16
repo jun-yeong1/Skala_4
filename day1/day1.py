@@ -30,8 +30,8 @@ async def fetch_all(urls):
 
 # api url 리스트 선언    
 urls = ['https://api.open-meteo.com/v1/forecast?latitude=37.5665&longitude=126.9780&hourly=temperature_2m,precipitation_probability&forecast_days=3&timezone=Asia/Seoul',
-        'https://restcountries.com/v3.1/alpha/KR',
-        'http://ip-api.com/json/8.8.8.8']
+        'https://countries.dev/alpha/KR',
+        'https://countries.dev/alpha/KOR']
 
 
 ### 3. Pydantic v2로 스키마 검증
