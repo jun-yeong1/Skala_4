@@ -1,7 +1,6 @@
-vscode/
-lib/
-__pycache__/
-bin/
-include/
-.DS_Store
 .vscode/
+**/lib/
+**/__pycache__/
+**/bin/
+**/include/
+.DS_Store
