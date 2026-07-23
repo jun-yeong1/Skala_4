@@ -4,4 +4,4 @@ __pycache__/
 bin/
 include/
 .DS_Store
-.vscode
+.vscode/
