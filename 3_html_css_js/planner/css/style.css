@@ -8,12 +8,20 @@
     --gap: 16px;
     --space: 16px;
 }
-* { box-sizing: border-box;
+
+/* 화면 너비에 따라 기준 글자 크기를 유동적으로 조절
+   → 이하 모든 rem 단위 요소들이 자동으로 함께 줄어듦 */
+html {
+    font-size: clamp(14px, 3.2vw, 16px);
+}
+
+* {
+    box-sizing: border-box;
     margin: 0;
 }
 
 body {
-    font-family: system-ui, sans-serif;
+    font-family: "Pretendard", system-ui, sans-serif;
     color: var(--text);
     line-height: 1.6;
     background-color: rgb(110, 219, 199);
@@ -30,7 +38,7 @@ body {
     padding: 20px 40px 20px 40px;
 }
 
-.container { 
+.container {
     max-width: 720px;
     margin: 0 auto;
     padding: 24px var(--space) 48px;
@@ -42,7 +50,6 @@ body {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
-    height: 45px;
 }
 
 .form-input {
@@ -53,17 +60,99 @@ body {
     padding-left: 20px;
 }
 
+.form-input:focus-visible,
+.btn:focus-visible {
+    outline: 2px solid var(--color-brand);
+    /* 키보드 이동 시만 표시 */
+    outline-offset: 2px;
+}
+
 .form-select {
     border: 1px solid var(--color-line);
     border-radius: 10px;
     padding-left: 5px;
 }
 
+/* 학습 목록 검색창 */
+.search-row {
+    display: flex;
+}
+
+.search-row .form-input {
+    flex: 1 1 auto;
+}
+
+/* 분류별 남은 개수 표시 */
+.category-counts {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.category-count {
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+}
+
+/* 학습 목록 */
+.list-empty {
+    text-align: center;
+}
+
+/* 할일 목록 */
 .item {
+    display: flex;
+    gap: 10px;
+    border-bottom: 1px solid var(--color-line);
+    align-items: center;
+}
+
+/* 할일 목록 중 완료된 것 */
+.item.is-done .item-text {
+    text-decoration: line-through;
+    color: #999;
+}
+
+/* 삭제 버튼 */
+.item-del {
+    background-color: #fff;
+    padding: 10px 10px;
+    border: 0;
+    transition: transform .15s, opacity .15s;
+    border: 1px solid var(--color-line);
+    border-radius: 5px;
+    margin-right: 0;
+}
+
+.item-del:hover {
+    transform: translateY(-2px);
+    opacity: .9;
+}
+
+.item-text {
+    margin-left: 8px;
+}
+
+/* item-day 부터는 오른쪽 정렬 (checkbox, item-text는 왼쪽 유지) */
+.item-day {
+    margin-left: auto;
+}
+
+.item-day,
+.badge,
+.item-del {
+    display: flex;
+    align-items: center;
+}
+
+.item-day .badge .item-del {
+    margin-left: 10px;
+    /* 오른쪽으로 밀기 */
     display: flex;
     align-items: center;
     gap: 10px;
-    border-bottom: 1px solid var(--color-line);
 }
 
 .panel {
@@ -77,15 +166,7 @@ body {
     margin: 2px;
 }
 
-.list-empty {
-    text-align: center;
-}
-
-.progress {
-    border-top: 5px solid var(--color-line);
-    padding-top: 10px;
-}
-
+/* 할 일 목표 바 채우기 */
 .progress-fill {
     display: block;
     height: 100%;
@@ -93,10 +174,23 @@ body {
     background: var(--color-brand);
 }
 
-.card {
-    padding: var(--gap);
-    border-radius: var(--radius);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.progress-bar {
+    width: 100%;
+    height: 12px;
+    background: #e5e7eb;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+/* 할일 목표 종류 표시 */
+.badge {
+    display: inline-block;
+    width: 40px;
+    border: 1px solid var(--color-line);
+    border-radius: 999px;
+    font-size: 0.7rem;
+    padding: 3px;
+    text-align: center;
 }
 
 .btn {
@@ -107,7 +201,11 @@ body {
     transition: transform .15s, opacity .15s;
     border-radius: var(--radius);
 }
-.btn:hover { transform: translateY(-2px); opacity: .9; }
+
+.btn:hover {
+    transform: translateY(-2px);
+    opacity: .9;
+}
 
 .panel-title {
     display: flex;
@@ -126,6 +224,7 @@ body {
     justify-content: flex-end;
     gap: 5px;
 }
+
 .tab {
     background-color: #fff;
     padding: 10px 18px;
@@ -134,7 +233,11 @@ body {
     border: 1px solid var(--color-line);
     border-radius: 999px;
 }
-.tab:hover { transform: translateY(-2px); opacity: .9; }
+
+.tab:hover {
+    transform: translateY(-2px);
+    opacity: .9;
+}
 
 /* 버튼 is-active 처리 */
 .tab.is-active {
@@ -149,7 +252,40 @@ body {
 
 .sr-only {
     position: absolute;
-    width: 1px; height: 1px;
+    width: 1px;
+    height: 1px;
     overflow: hidden;
     clip-path: inset(50%);
+}
+
+.logo {
+    font-size: clamp(1.3rem, 1rem + 2vw, 2rem);
+}
+
+.today {
+    font-size: clamp(0.8rem, 0.65rem + 1vw, 1rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        transition-duration: .01ms !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .form-input,
+    .form-select,
+    .btn {
+        flex: 1 1 100%;
+    }
+
+    .panel {
+        padding: 16px;
+    }
 }
