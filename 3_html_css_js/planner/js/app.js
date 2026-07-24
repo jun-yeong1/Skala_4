@@ -44,6 +44,13 @@ li.textContent = "새 목표";                   // 내용 지정
 listEl.appendChild(li);                     // #goal-list의 자식으로 추가
 listEl.innerHTML = "";                      // 자식 전체 비우기
 
+// 날짜 업데이트
+const today = new Date();
+const year = today.getFullYear();
+const month = today.getMonth() + 1;
+const date = today.getDate();
+document.getElementById("today").innerText = `${year}년 ${month}월 ${date}일`;
+
 form.addEventListener("submit", (event) => {
     event.preventDefault(); // 새로고침 방지
     console.log(event.type); // "submit"
